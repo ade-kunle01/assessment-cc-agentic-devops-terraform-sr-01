@@ -37,3 +37,9 @@ This file is used by the project instructions to record prompt/response exchange
 - user_prompt: "Target group import failure (needs ARN not name) and missing security group import step"
 - assistant_response_summary: "Fixed target group import to use AWS CLI to look up the ARN before importing, added security group import step with SG ID lookup, and added lifecycle protection to ALB security group."
 - files_affected: ".github/workflows/cd.yaml, terraform/modules/ecs_app/main.tf"
+
+---
+- timestamp: "2026-06-16T00:06:00"
+- user_prompt: "ECS security group and load balancer already exist errors during terraform apply"
+- assistant_response_summary: "Added import steps for ECS security group and load balancer in CD workflow using AWS CLI lookups, and added lifecycle protection to both resources in the Terraform module."
+- files_affected: ".github/workflows/cd.yaml, terraform/modules/ecs_app/main.tf"
