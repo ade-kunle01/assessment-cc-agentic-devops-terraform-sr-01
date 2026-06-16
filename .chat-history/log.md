@@ -31,3 +31,9 @@ This file is used by the project instructions to record prompt/response exchange
 - user_prompt: "Multiple AWS resource already exists errors: IAM role, ECR repository, and target group during terraform apply"
 - assistant_response_summary: "Added terraform import statements for all three resources in CD workflow before apply step, and added lifecycle ignore_changes rules to IAM role and target group to handle existing resources gracefully."
 - files_affected: ".github/workflows/cd.yaml, terraform/modules/ecs_app/main.tf"
+
+---
+- timestamp: "2026-06-16T00:05:00"
+- user_prompt: "Target group import failure (needs ARN not name) and missing security group import step"
+- assistant_response_summary: "Fixed target group import to use AWS CLI to look up the ARN before importing, added security group import step with SG ID lookup, and added lifecycle protection to ALB security group."
+- files_affected: ".github/workflows/cd.yaml, terraform/modules/ecs_app/main.tf"
