@@ -35,6 +35,10 @@ resource "aws_iam_role" "ecs_task_execution" {
       Action = "sts:AssumeRole"
     }]
   })
+
+  lifecycle {
+    ignore_changes = [assume_role_policy]
+  }
 }
 
 resource "aws_iam_role_policy" "ecs_task_execution" {
@@ -73,6 +77,10 @@ resource "aws_cloudwatch_log_group" "this" {
 resource "aws_ecr_repository" "this" {
   name                 = "${var.app_name}-${var.environment}"
   image_tag_mutability = "MUTABLE"
+
+  lifecycle {
+    ignore_changes = [name, image_tag_mutability]
+  }
 
   image_scanning_configuration {
     scan_on_push = true
@@ -147,6 +155,10 @@ resource "aws_lb_target_group" "this" {
     timeout             = 5
     interval            = 30
     matcher             = "200"
+  }
+
+  lifecycle {
+    ignore_changes = [name, port, protocol, vpc_id, target_type, health_check]
   }
 }
 

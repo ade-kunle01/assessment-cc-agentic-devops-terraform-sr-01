@@ -25,3 +25,9 @@ This file is used by the project instructions to record prompt/response exchange
 - user_prompt: "CloudWatch Logs error: ResourceAlreadyExistsException when creating log group /ecs/rdicidr-devel in terraform apply"
 - assistant_response_summary: "Fixed log group creation failure by adding skip_destroy=true and lifecycle ignore_changes to the resource, and added a terraform import step in CD workflow to import existing log group before apply."
 - files_affected: "terraform/modules/ecs_app/main.tf, .github/workflows/cd.yaml"
+
+---
+- timestamp: "2026-06-16T00:04:00"
+- user_prompt: "Multiple AWS resource already exists errors: IAM role, ECR repository, and target group during terraform apply"
+- assistant_response_summary: "Added terraform import statements for all three resources in CD workflow before apply step, and added lifecycle ignore_changes rules to IAM role and target group to handle existing resources gracefully."
+- files_affected: ".github/workflows/cd.yaml, terraform/modules/ecs_app/main.tf"
