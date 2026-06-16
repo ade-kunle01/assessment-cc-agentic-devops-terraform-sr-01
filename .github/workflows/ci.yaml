@@ -20,15 +20,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Cache node_modules
-        uses: actions/cache/save@v3
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+        run: npm ci
 
   lint:
     needs: [install]
@@ -41,12 +37,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-      - name: Restore node_modules
-        uses: actions/cache/restore@v3
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run linter
         run: npm run lint
@@ -65,12 +60,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-      - name: Restore node_modules
-        uses: actions/cache/restore@v3
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run tests
         env:
@@ -88,12 +82,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-      - name: Restore node_modules
-        uses: actions/cache/restore@v3
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build project
         run: npm run build
