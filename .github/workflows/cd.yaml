@@ -62,6 +62,10 @@ jobs:
         working-directory: terraform/environments/${{ github.ref_name }}
         run: terraform init -input=false
 
+      - name: Import existing log group (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform import module.ecs_app.aws_cloudwatch_log_group.this /ecs/rdicidr-${{ github.ref_name }} || true
+
       - name: Terraform apply
         working-directory: terraform/environments/${{ github.ref_name }}
         run: terraform apply -auto-approve -input=false

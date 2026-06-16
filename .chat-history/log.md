@@ -19,3 +19,9 @@ This file is used by the project instructions to record prompt/response exchange
 - user_prompt: "Run npm run prettier --write to fix - CI workflow has broken prettier command and formatting issues still flagged"
 - assistant_response_summary: "Fixed broken CI workflow command (removed incorrect --write to fix args), updated prettier script in package.json to use --write mode instead of check mode (-c) so formatter auto-fixes issues instead of just reporting them."
 - files_affected: ".github/workflows/ci.yaml, package.json"
+
+---
+- timestamp: "2026-06-16T00:03:00"
+- user_prompt: "CloudWatch Logs error: ResourceAlreadyExistsException when creating log group /ecs/rdicidr-devel in terraform apply"
+- assistant_response_summary: "Fixed log group creation failure by adding skip_destroy=true and lifecycle ignore_changes to the resource, and added a terraform import step in CD workflow to import existing log group before apply."
+- files_affected: "terraform/modules/ecs_app/main.tf, .github/workflows/cd.yaml"

@@ -62,6 +62,12 @@ resource "aws_iam_role_policy" "ecs_task_execution" {
 resource "aws_cloudwatch_log_group" "this" {
   name              = "/ecs/${var.app_name}-${var.environment}"
   retention_in_days = 30
+
+  skip_destroy = true
+
+  lifecycle {
+    ignore_changes = [retention_in_days]
+  }
 }
 
 resource "aws_ecr_repository" "this" {
