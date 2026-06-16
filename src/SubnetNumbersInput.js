@@ -29,7 +29,7 @@ const SubnetNumbersInput = (props) => {
             change = true;
           } else if (isNaN(e.target.value)) {
             change = false;
-            //stay the same
+            // stay the same
           } else {
             change = true;
             setIsValid(true);
