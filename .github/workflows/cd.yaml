@@ -1,0 +1,190 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - devel
+      - stage
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_PLAN_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_PLAN_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform init -input=false
+
+      - name: Terraform plan
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform plan -input=false -no-color
+
+  terraform-apply:
+    name: Terraform Apply
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    outputs:
+      ecr_repository_url: ${{ steps.repo.outputs.ecr_repository_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform init -input=false
+
+      - name: Import existing log group (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform import module.ecs_app.aws_cloudwatch_log_group.this /ecs/rdicidr-${{ github.ref_name }} || true
+
+      - name: Import existing IAM role (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform import module.ecs_app.aws_iam_role.ecs_task_execution rdicidr-${{ github.ref_name }}-task-exec-role || true
+
+      - name: Import existing ECR repository (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform import module.ecs_app.aws_ecr_repository.this rdicidr-${{ github.ref_name }} || true
+
+      - name: Import existing target group (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: |
+          TG_ARN=$(aws elbv2 describe-target-groups --names rdicidr-${{ github.ref_name }}-tg --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
+          if [ ! -z "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
+            terraform import module.ecs_app.aws_lb_target_group.this "$TG_ARN" || true
+          fi
+
+      - name: Import existing security group (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: |
+          SG_ID=$(aws ec2 describe-security-groups --filters Name=group-name,Values=rdicidr-${{ github.ref_name }}-alb-sg --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "")
+          if [ ! -z "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+            terraform import module.ecs_app.aws_security_group.alb "$SG_ID" || true
+          fi
+
+      - name: Import existing ECS security group (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: |
+          SG_ID=$(aws ec2 describe-security-groups --filters Name=group-name,Values=rdicidr-${{ github.ref_name }}-ecs-sg --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "")
+          if [ ! -z "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+            terraform import module.ecs_app.aws_security_group.ecs_service "$SG_ID" || true
+          fi
+
+      - name: Import existing load balancer (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: |
+          ALB_ARN=$(aws elbv2 describe-load-balancers --names rdicidr-${{ github.ref_name }}-alb --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>/dev/null || echo "")
+          if [ ! -z "$ALB_ARN" ] && [ "$ALB_ARN" != "None" ]; then
+            terraform import module.ecs_app.aws_lb.this "$ALB_ARN" || true
+          fi
+
+      - name: Import existing ECS service (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: |
+          terraform import module.ecs_app.aws_ecs_service.this rdicidr-${{ github.ref_name }}-cluster/rdicidr-${{ github.ref_name }}-service || true
+
+      - name: Terraform apply
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Capture ECR repository URL
+        id: repo
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: echo "ecr_repository_url=$(terraform output -raw ecr_repository_url)" >> "$GITHUB_OUTPUT"
+
+  docker-build-push:
+    name: Docker Build and Push
+    needs: terraform-apply
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ needs.terraform-apply.outputs.ecr_repository_url }}:${{ github.sha }}
+            ${{ needs.terraform-apply.outputs.ecr_repository_url }}:latest
+
+  deploy-ecs:
+    name: Deploy to ECS
+    needs: [docker-build-push, terraform-apply]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition rdicidr-${{ github.ref_name }} \
+            --query 'taskDefinition' > task-definition.json
+
+      - name: Update task definition with new image
+        run: |
+          jq '.containerDefinitions[0].image = "${{ needs.terraform-apply.outputs.ecr_repository_url }}:${{ github.sha }}"' task-definition.json | \
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > new-task-definition.json
+
+      - name: Register new task definition
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-definition.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster rdicidr-${{ github.ref_name }}-cluster \
+            --service rdicidr-${{ github.ref_name }}-service \
+            --task-definition $TASK_DEF_ARN \
+            --force-new-deployment
