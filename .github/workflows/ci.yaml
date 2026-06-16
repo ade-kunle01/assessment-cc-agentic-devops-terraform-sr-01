@@ -20,11 +20,17 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
   lint:
     needs: [install]
@@ -37,11 +43,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
       - name: Run linter
         run: npm run lint
@@ -60,11 +69,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
       - name: Run tests
         env:
@@ -82,11 +94,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '15'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
       - name: Build project
         run: npm run build
