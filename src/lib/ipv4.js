@@ -166,7 +166,7 @@ class IPv4 {
     const newNetmask = this.mask + len;
     const maxNetmask = (netmask | additionalMask) >>> 0;
     let currentSubnet = netmask;
-    const currentOctets = this.address;
+    let currentOctets = this.address;
     while (currentSubnet <= maxNetmask) {
       let currIpv4 = new IPv4(currentOctets, newNetmask);
       subnets.push({
