@@ -66,6 +66,18 @@ jobs:
         working-directory: terraform/environments/${{ github.ref_name }}
         run: terraform import module.ecs_app.aws_cloudwatch_log_group.this /ecs/rdicidr-${{ github.ref_name }} || true
 
+      - name: Import existing IAM role (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform import module.ecs_app.aws_iam_role.ecs_task_execution rdicidr-${{ github.ref_name }}-task-exec-role || true
+
+      - name: Import existing ECR repository (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform import module.ecs_app.aws_ecr_repository.this rdicidr-${{ github.ref_name }} || true
+
+      - name: Import existing target group (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: terraform import module.ecs_app.aws_lb_target_group.this rdicidr-${{ github.ref_name }}-tg || true
+
       - name: Terraform apply
         working-directory: terraform/environments/${{ github.ref_name }}
         run: terraform apply -auto-approve -input=false
