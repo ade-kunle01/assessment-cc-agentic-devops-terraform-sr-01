@@ -32,14 +32,16 @@ const IPv4Addr = (props) => {
   };
 
   const displayNetmasks = (netmasks) => {
-    let netmasksElements = [];
+    const netmasksElements = [];
+
     netmasks.forEach((e, index) => {
       netmasksElements.push(
         <div key={`networkAddress-${index}`}>
           {e.networkAddress}/{e.netmask} ({e.count} hosts)
-        </div>
+        </div>,
       );
     });
+
     return netmasksElements;
   };
 
@@ -133,7 +135,7 @@ const IPv4Addr = (props) => {
         {showSubnetting ? (
           <div id="details">
             max number of subnets: {ipv4.numberOfPossibleSubnets()} with a
-            minimum of 4 addreses (minus Network, broadcast, 2 available
+            minimum of 4 addresses (minus Network, broadcast, 2 available
             addresses) closest: {ipv4.getClosestPowerOfTwo(subnetsNumber)}
             <div id="subnet-input-container">
               <SubnetNumbersInput
