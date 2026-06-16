@@ -133,6 +133,10 @@ resource "aws_security_group" "ecs_service" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  lifecycle {
+    ignore_changes = [name, description, vpc_id, ingress, egress]
+  }
 }
 
 resource "aws_lb" "this" {
@@ -141,6 +145,10 @@ resource "aws_lb" "this" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = data.aws_subnets.default.ids
+
+  lifecycle {
+    ignore_changes = [name, internal, load_balancer_type, security_groups, subnets]
+  }
 }
 
 resource "aws_lb_target_group" "this" {

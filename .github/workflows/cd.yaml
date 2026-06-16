@@ -90,6 +90,22 @@ jobs:
             terraform import module.ecs_app.aws_security_group.alb "$SG_ID" || true
           fi
 
+      - name: Import existing ECS security group (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: |
+          SG_ID=$(aws ec2 describe-security-groups --filters Name=group-name,Values=rdicidr-${{ github.ref_name }}-ecs-sg --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "")
+          if [ ! -z "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+            terraform import module.ecs_app.aws_security_group.ecs_service "$SG_ID" || true
+          fi
+
+      - name: Import existing load balancer (if exists)
+        working-directory: terraform/environments/${{ github.ref_name }}
+        run: |
+          ALB_ARN=$(aws elbv2 describe-load-balancers --names rdicidr-${{ github.ref_name }}-alb --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>/dev/null || echo "")
+          if [ ! -z "$ALB_ARN" ] && [ "$ALB_ARN" != "None" ]; then
+            terraform import module.ecs_app.aws_lb.this "$ALB_ARN" || true
+          fi
+
       - name: Terraform apply
         working-directory: terraform/environments/${{ github.ref_name }}
         run: terraform apply -auto-approve -input=false
