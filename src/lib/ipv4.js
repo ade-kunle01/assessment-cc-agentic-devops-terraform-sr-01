@@ -58,7 +58,9 @@ class IPv4 {
       .padStart(32, "0")
       .match(/.{1,8}/g);
 
-    const intNetWorkAddress = networkAddress.map((octet) => parseInt(octet, 2));
+    const intNetWorkAddress = networkAddress.map((octet) =>
+      parseInt(octet, 2),
+    );
     return intNetWorkAddress.join(".");
   }
 
@@ -73,7 +75,9 @@ class IPv4 {
       .padStart(32, "0")
       .match(/.{1,8}/g);
 
-    const intFirstAddress = firstAddress.map((octet) => parseInt(octet, 2));
+    const intFirstAddress = firstAddress.map((octet) =>
+      parseInt(octet, 2),
+    );
     return intFirstAddress.join(".");
   }
 
@@ -89,7 +93,9 @@ class IPv4 {
       .padStart(32, "0")
       .match(/.{1,8}/g);
 
-    const intLastAddress = lastAddress.map((octet) => parseInt(octet, 2));
+    const intLastAddress = lastAddress.map((octet) =>
+      parseInt(octet, 2),
+    );
     return intLastAddress.join(".");
   }
 
@@ -105,7 +111,9 @@ class IPv4 {
       .padStart(32, "0")
       .match(/.{1,8}/g);
 
-    const intBroadcastAddress = broadcastAddress.map((octet) => parseInt(octet, 2));
+    const intBroadcastAddress = broadcastAddress.map((octet) =>
+      parseInt(octet, 2),
+    );
     return intBroadcastAddress.join(".");
   }
 
