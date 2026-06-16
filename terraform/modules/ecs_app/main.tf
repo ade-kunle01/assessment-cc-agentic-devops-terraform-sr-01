@@ -241,6 +241,6 @@ resource "aws_ecs_service" "this" {
   depends_on = [aws_lb_listener.http]
 
   lifecycle {
-    ignore_changes = [desired_count]
+    ignore_changes = [desired_count, task_definition]
   }
 }
