@@ -55,7 +55,7 @@ jobs:
         run: npm run lint
 
       - name: Run formatter
-        run: npm run prettier
+        run: npm run prettier --write to fix
 
   test:
     needs: lint
