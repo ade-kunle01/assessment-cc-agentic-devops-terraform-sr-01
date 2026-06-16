@@ -11,9 +11,10 @@ function App() {
       <footer>
         <hr />
         <div className="App-api-status">
-          API endpoint: <span data-testid="api-url">{process.env.REACT_APP_API_URL}</span>
+          API endpoint:{" "}
+          <span data-testid="api-url">{process.env.REACT_APP_API_URL}</span>
         </div>
-        If you find this tool useful, you might enjoy reading my blog: {" "}
+        If you find this tool useful, you might enjoy reading my blog:{" "}
         <a href="https://rderik.com">rderik.com</a>
       </footer>
     </div>
