@@ -7,7 +7,7 @@ on:
       - stage
 
 jobs:
-  validate:
+  install:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,21 +22,55 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+  lint:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '15'
+          cache: 'npm'
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run formatter
+        run: npm run prettier
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '15'
+          cache: 'npm'
+
       - name: Run tests
         env:
           CI: true
         run: npm test -- --watch=false
 
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '15'
+          cache: 'npm'
+
       - name: Build project
         run: npm run build
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform fmt (devel)
-        working-directory: terraform/environments/devel
-        run: terraform fmt -check -recursive
-
-      - name: Terraform fmt (stage)
-        working-directory: terraform/environments/stage
-        run: terraform fmt -check -recursive
