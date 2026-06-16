@@ -146,13 +146,10 @@ jobs:
 
   deploy-ecs:
     name: Deploy to ECS
-    needs: docker-build-push
+    needs: [docker-build-push, terraform-apply]
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -160,13 +157,29 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Get current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition rdicidr-${{ github.ref_name }} \
+            --query 'taskDefinition' > task-definition.json
 
-      - name: Terraform init
-        working-directory: terraform/environments/${{ github.ref_name }}
-        run: terraform init -input=false
+      - name: Update task definition with new image
+        run: |
+          jq '.containerDefinitions[0].image = "${{ needs.terraform-apply.outputs.ecr_repository_url }}:${{ github.sha }}"' task-definition.json | \
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > new-task-definition.json
 
-      - name: Terraform apply with new image
-        working-directory: terraform/environments/${{ github.ref_name }}
-        run: terraform apply -auto-approve -input=false -var="container_image=${{ needs.terraform-apply.outputs.ecr_repository_url }}:${{ github.sha }}"
+      - name: Register new task definition
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-definition.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster rdicidr-${{ github.ref_name }}-cluster \
+            --service rdicidr-${{ github.ref_name }}-service \
+            --task-definition $TASK_DEF_ARN \
+            --force-new-deployment

@@ -43,3 +43,15 @@ This file is used by the project instructions to record prompt/response exchange
 - user_prompt: "ECS security group and load balancer already exist errors during terraform apply"
 - assistant_response_summary: "Added import steps for ECS security group and load balancer in CD workflow using AWS CLI lookups, and added lifecycle protection to both resources in the Terraform module."
 - files_affected: ".github/workflows/cd.yaml, terraform/modules/ecs_app/main.tf"
+
+---
+- timestamp: "2026-06-16T00:07:00"
+- user_prompt: "deploy-ecs job is wrong, infrastructure already exists, just deploy docker image to ECR"
+- assistant_response_summary: "Simplified deploy-ecs job to only trigger ECS service force-new-deployment using AWS CLI instead of re-running terraform apply, which is appropriate since infrastructure is already provisioned."
+- files_affected: ".github/workflows/cd.yaml"
+
+---
+- timestamp: "2026-06-16T00:08:00"
+- user_prompt: "deploy-ecs job needs to know the current task definition and update it with new image"
+- assistant_response_summary: "Updated deploy-ecs job to retrieve current task definition, update container image reference with new ECR image tag, register new task definition revision, and update ECS service to use the new definition."
+- files_affected: ".github/workflows/cd.yaml"
