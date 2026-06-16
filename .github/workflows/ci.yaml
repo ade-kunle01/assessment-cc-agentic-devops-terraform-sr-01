@@ -22,6 +22,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+
   lint:
     needs: install
     runs-on: ubuntu-latest
@@ -34,6 +42,14 @@ jobs:
         with:
           node-version: '15'
           cache: 'npm'
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
       - name: Run linter
         run: npm run lint
@@ -54,6 +70,14 @@ jobs:
           node-version: '15'
           cache: 'npm'
 
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+
       - name: Run tests
         env:
           CI: true
@@ -71,6 +95,14 @@ jobs:
         with:
           node-version: '15'
           cache: 'npm'
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
       - name: Build project
         run: npm run build
