@@ -109,6 +109,10 @@ resource "aws_security_group" "alb" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  lifecycle {
+    ignore_changes = [name, description, vpc_id, ingress, egress]
+  }
 }
 
 resource "aws_security_group" "ecs_service" {
