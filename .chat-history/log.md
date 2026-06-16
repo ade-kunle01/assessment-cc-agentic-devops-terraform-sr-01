@@ -55,3 +55,9 @@ This file is used by the project instructions to record prompt/response exchange
 - user_prompt: "deploy-ecs job needs to know the current task definition and update it with new image"
 - assistant_response_summary: "Updated deploy-ecs job to retrieve current task definition, update container image reference with new ECR image tag, register new task definition revision, and update ECS service to use the new definition."
 - files_affected: ".github/workflows/cd.yaml"
+
+---
+- timestamp: "2026-06-16T00:09:00"
+- user_prompt: "ECS service creation not idempotent error - service already exists in AWS"
+- assistant_response_summary: "Added ECS service import step to CD workflow (using cluster/service format), and expanded lifecycle ignore_changes to include task_definition since deploy job manages it."
+- files_affected: ".github/workflows/cd.yaml, terraform/modules/ecs_app/main.tf"
